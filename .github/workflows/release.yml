@@ -1,6 +1,9 @@
-on: [push, pull_request]
+on:
+  push:
+    tags:
+    - '*'
 jobs:
-  release:
+  build-release:
     strategy:
       matrix:
         os: [ubuntu-latest]
@@ -11,7 +14,6 @@ jobs:
           x86_64-linux-musl,
           aarch64-macos,
           x86_64-macos,
-          wasm32-wasi,
           x86_64-windows-gnu,
           x86-linux-gnu,
           x86-linux-musl,
@@ -32,3 +34,12 @@ jobs:
           name: lua_${{ matrix.target }}
           path: |
             ./lua_${{ matrix.target }}.tar.gz
+  create-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+    - uses: actions/checkout@v4
+    - uses: ncipollo/release-action@v1
+      with:
+        artifacts: "*.tar.gz"
