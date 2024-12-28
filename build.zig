@@ -35,7 +35,6 @@ pub fn build(b: *std.Build) !void {
         .version = .{ .major = 5, .minor = 4, .patch = 7 },
         .link_libc = true,
     });
-    lua_c.linkLibrary(if (build_shared) shared.? else static);
 
     b.installArtifact(exe);
     b.installArtifact(lua_c);
