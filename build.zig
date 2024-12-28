@@ -2,7 +2,7 @@ const std = @import("std");
 
 pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
-    const optimize = b.standardOptimizeOption(.{ .preferred_optimize_mode = .ReleaseFast });
+    const optimize = b.standardOptimizeOption(.{});
     const build_shared = b.option(bool, "shared", "build a shared library") orelse false;
 
     const upstream = b.dependency("lua54", .{});
@@ -53,6 +53,11 @@ pub fn build(b: *std.Build) !void {
     };
     exe.addCSourceFile(.{ .file = upstream.path("src/lua.c"), .flags = flags });
     lua_c.addCSourceFile(.{ .file = upstream.path("src/luac.c"), .flags = flags });
+    lua_c.addCSourceFiles(.{
+        .root = .{ .dependency = .{ .dependency = upstream, .sub_path = "" } },
+        .files = lua_source_files,
+        .flags = flags,
+    });
 
     const libs: []const *std.Build.Step.Compile = if (build_shared) &.{ static, shared.? } else &.{static};
     for (libs) |lib| {
