@@ -9,13 +9,13 @@ pub fn build(b: *std.Build) !void {
     };
     const sdk_version = b.option([]const u8, "sdk_version", "which version of the MSVC to install") orelse "10.0.20348";
 
-    const xwin = b.dependency("zig-build-msvc-sdk", .{
+    const xwin = b.lazyDependency("zig-build-msvc-sdk", .{
         .target = target,
         .optimize = optimize,
         .sdk_version = sdk_version,
     });
-    const msvc_write_files = xwin.namedWriteFiles("msvc_libc");
-    const msvc_libc_txt = msvc_write_files.getDirectory().path(b, "libc.txt");
+    const msvc_write_files = if (use_xwin) xwin.?.namedWriteFiles("msvc_libc") else null;
+    const msvc_libc_txt = if (use_xwin) msvc_write_files.?.getDirectory().path(b, "libc.txt") else null;
 
     const upstream = b.dependency("lua54", .{});
 
@@ -27,7 +27,7 @@ pub fn build(b: *std.Build) !void {
     });
     if (use_xwin) {
         static.libc_file = msvc_libc_txt;
-        static.step.dependOn(&msvc_write_files.step);
+        static.step.dependOn(&msvc_write_files.?.step);
     }
     const shared = if (build_shared) b.addSharedLibrary(.{
         .name = "lua",
@@ -37,7 +37,7 @@ pub fn build(b: *std.Build) !void {
     }) else null;
     if (shared) |s| {
         if (use_xwin) s.libc_file = msvc_libc_txt;
-        s.step.dependOn(&msvc_write_files.step);
+        s.step.dependOn(&msvc_write_files.?.step);
     }
     const exe = b.addExecutable(.{
         .name = "lua",
@@ -48,7 +48,7 @@ pub fn build(b: *std.Build) !void {
     });
     if (use_xwin) {
         exe.libc_file = msvc_libc_txt;
-        exe.step.dependOn(&msvc_write_files.step);
+        exe.step.dependOn(&msvc_write_files.?.step);
     }
     // statically link on windows to avoid https://github.com/ziglang/zig/issues/15107 in 0.13.0
     exe.linkLibrary(if (build_shared and target.result.os.tag != .windows) shared.? else static);
@@ -62,7 +62,7 @@ pub fn build(b: *std.Build) !void {
     });
     if (use_xwin) {
         lua_c.libc_file = msvc_libc_txt;
-        lua_c.step.dependOn(&msvc_write_files.step);
+        lua_c.step.dependOn(&msvc_write_files.?.step);
     }
 
     b.installArtifact(exe);
@@ -89,8 +89,10 @@ pub fn build(b: *std.Build) !void {
 
     const libs: []const *std.Build.Step.Compile = if (build_shared) &.{ static, shared.? } else &.{static};
     for (libs) |lib| {
-        if (use_xwin) lib.libc_file = msvc_libc_txt;
-        lib.step.dependOn(&msvc_write_files.step);
+        if (use_xwin) {
+            lib.libc_file = msvc_libc_txt;
+            lib.step.dependOn(&msvc_write_files.?.step);
+        }
         lib.addIncludePath(upstream.path("src"));
         lib.addCSourceFiles(.{
             .root = .{ .dependency = .{ .dependency = upstream, .sub_path = "" } },
