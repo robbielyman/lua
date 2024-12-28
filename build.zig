@@ -24,20 +24,12 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
         .version = .{ .major = 5, .minor = 4, .patch = 7 },
     });
-    if (use_xwin) {
-        static.libc_file = msvc_libc_txt;
-        static.step.dependOn(&msvc_write_files.?.step);
-    }
     const shared = if (build_shared) b.addSharedLibrary(.{
         .name = "lua",
         .target = target,
         .optimize = optimize,
         .version = .{ .major = 5, .minor = 4, .patch = 7 },
     }) else null;
-    if (shared) |s| if (use_xwin) {
-        s.libc_file = msvc_libc_txt;
-        s.step.dependOn(&msvc_write_files.?.step);
-    }
     const exe = b.addExecutable(.{
         .name = "lua",
         .target = target,
