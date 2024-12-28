@@ -34,8 +34,8 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
         .version = .{ .major = 5, .minor = 4, .patch = 7 },
     }) else null;
-    if (shared) |s| {
-        if (use_xwin) s.libc_file = msvc_libc_txt;
+    if (shared) |s| if (use_xwin) {
+        s.libc_file = msvc_libc_txt;
         s.step.dependOn(&msvc_write_files.?.step);
     }
     const exe = b.addExecutable(.{
