@@ -24,7 +24,7 @@ jobs:
       - uses: actions/checkout@v4
       - uses: mlugg/setup-zig@v1
         with:
-          version: 0.13.0
+          version: master
       - run: zig build -Dtarget=${{ matrix.target }}
       - name: zip artifact
         run: |
