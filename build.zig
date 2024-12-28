@@ -26,7 +26,8 @@ pub fn build(b: *std.Build) !void {
         .version = .{ .major = 5, .minor = 4, .patch = 7 },
         .link_libc = true,
     });
-    exe.linkLibrary(if (build_shared) shared.? else static);
+    // statically link on windows to avoid https://github.com/ziglang/zig/issues/15107 in 0.13.0
+    exe.linkLibrary(if (build_shared and target.result.os.tag != .windows) shared.? else static);
 
     const lua_c = b.addExecutable(.{
         .name = "luac",
