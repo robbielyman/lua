@@ -15,7 +15,6 @@ jobs:
           aarch64-macos,
           x86_64-macos,
           x86_64-windows-gnu,
-          x86_64-windows-msvc,
           x86-linux-gnu,
           x86-linux-musl,
           x86-windows,
@@ -26,15 +25,7 @@ jobs:
       - uses: mlugg/setup-zig@v1
         with:
           version: master
-      - uses: actions-rust-lang/setup-rust-toolchain@v1
-        if: startsWith(matrix.target, 'x86_64-windows-msvc')
-      - run: cargo install --locked xwin
-        if: startsWith(matrix.target, 'x86_64-windows-msvc')
-      - run: |
-          xwin --accept-license --arch x86_64,aarch64 --variant desktop --sdk-version "10.0.20348" \
-          splat --include-debug-libs --include-debug-symbols --preserve-ms-arch-notation --output ${{ github.workspace }}/.xwin
-        if: startsWith(matrix.target, 'x86_64-windows-msvc')
-      - run: zig build -Dtarget=${{ matrix.target }} -Dxwin_path=${{ github.workspace }}/.xwin
+      - run: zig build -Dtarget=${{ matrix.target }}
       - name: zip artifact
         run: |
           cd zig-out/ && tar -czvf ../lua_${{ matrix.target }}.tar.gz .

@@ -4,17 +4,6 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const build_shared = b.option(bool, "shared", "build a shared library") orelse false;
-    const use_xwin = b.option(bool, "use_xwin", "use xwin to install MSVC SDK") orelse blk: {
-        break :blk target.result.abi == .msvc and !target.query.isNative();
-    };
-    const xwin_path = b.option([]const u8, "xwin_path", "output path where xwin was run") orelse ".xwin";
-
-    const xwin = b.lazyDependency("zig-build-msvc-sdk", .{
-        .target = target,
-        .xwin_output_directory = xwin_path,
-    });
-    const msvc_write_files = if (use_xwin) xwin.?.namedWriteFiles("msvc_libc") else null;
-    const msvc_libc_txt = if (use_xwin) msvc_write_files.?.getDirectory().path(b, "libc.txt") else null;
 
     const upstream = b.dependency("lua54", .{});
 
@@ -37,10 +26,6 @@ pub fn build(b: *std.Build) !void {
         .version = .{ .major = 5, .minor = 4, .patch = 7 },
         .link_libc = true,
     });
-    if (use_xwin) {
-        exe.libc_file = msvc_libc_txt;
-        exe.step.dependOn(&msvc_write_files.?.step);
-    }
     exe.linkLibrary(if (build_shared) shared.? else static);
 
     const lua_c = b.addExecutable(.{
@@ -50,10 +35,6 @@ pub fn build(b: *std.Build) !void {
         .version = .{ .major = 5, .minor = 4, .patch = 7 },
         .link_libc = true,
     });
-    if (use_xwin) {
-        lua_c.libc_file = msvc_libc_txt;
-        lua_c.step.dependOn(&msvc_write_files.?.step);
-    }
 
     b.installArtifact(exe);
     b.installArtifact(lua_c);
@@ -79,10 +60,6 @@ pub fn build(b: *std.Build) !void {
 
     const libs: []const *std.Build.Step.Compile = if (build_shared) &.{ static, shared.? } else &.{static};
     for (libs) |lib| {
-        if (use_xwin) {
-            lib.libc_file = msvc_libc_txt;
-            lib.step.dependOn(&msvc_write_files.?.step);
-        }
         lib.addIncludePath(upstream.path("src"));
         lib.addCSourceFiles(.{
             .root = .{ .dependency = .{ .dependency = upstream, .sub_path = "" } },
