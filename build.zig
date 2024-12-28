@@ -7,12 +7,11 @@ pub fn build(b: *std.Build) !void {
     const use_xwin = b.option(bool, "use_xwin", "use xwin to install MSVC SDK") orelse blk: {
         break :blk target.result.abi == .msvc and !target.query.isNative();
     };
-    const sdk_version = b.option([]const u8, "sdk_version", "which version of the MSVC to install") orelse "10.0.20348";
+    const xwin_path = b.option([]const u8, "xwin_path", "output path where xwin was run") orelse ".xwin";
 
     const xwin = b.lazyDependency("zig-build-msvc-sdk", .{
         .target = target,
-        .optimize = optimize,
-        .sdk_version = sdk_version,
+        .xwin_output_directory = xwin_path,
     });
     const msvc_write_files = if (use_xwin) xwin.?.namedWriteFiles("msvc_libc") else null;
     const msvc_libc_txt = if (use_xwin) msvc_write_files.?.getDirectory().path(b, "libc.txt") else null;
