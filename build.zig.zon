@@ -7,5 +7,9 @@
             .url = "https://www.lua.org/ftp/lua-5.4.7.tar.gz",
             .hash = "12206df90729936e110f5d2574437be370fc4367b5f44afcc77749ac421547bc8ff0",
         },
+        .@"zig-build-msvc-sdk" = .{
+            .url = "git+https://github.com/robbielyman/zig-build-msvc-sdk#0f8123c5b09d80cbef1225bd96a74070a39c89ed",
+            .hash = "1220003a629c21f5f6fcf57f0660d6dabaeb631938410d5762a3aca8053d5bf91971",
+        },
     },
 }

@@ -4,6 +4,18 @@ pub fn build(b: *std.Build) !void {
     const target = b.standardTargetOptions(.{});
     const optimize = b.standardOptimizeOption(.{});
     const build_shared = b.option(bool, "shared", "build a shared library") orelse false;
+    const use_xwin = b.option(bool, "use_xwin", "use xwin to install MSVC SDK") orelse blk: {
+        break :blk target.result.abi == .msvc and !target.query.isNative();
+    };
+    const sdk_version = b.option([]const u8, "sdk_version", "which version of the MSVC to install") orelse "10.0.20348";
+
+    const xwin = b.dependency("zig-build-msvc-sdk", .{
+        .target = target,
+        .optimize = optimize,
+        .sdk_version = sdk_version,
+    });
+    const msvc_write_files = xwin.namedWriteFiles("msvc_libc");
+    const msvc_libc_txt = msvc_write_files.getDirectory().path(b, "libc.txt");
 
     const upstream = b.dependency("lua54", .{});
 
@@ -13,12 +25,20 @@ pub fn build(b: *std.Build) !void {
         .optimize = optimize,
         .version = .{ .major = 5, .minor = 4, .patch = 7 },
     });
+    if (use_xwin) {
+        static.libc_file = msvc_libc_txt;
+        static.step.dependOn(&msvc_write_files.step);
+    }
     const shared = if (build_shared) b.addSharedLibrary(.{
         .name = "lua",
         .target = target,
         .optimize = optimize,
         .version = .{ .major = 5, .minor = 4, .patch = 7 },
     }) else null;
+    if (shared) |s| {
+        if (use_xwin) s.libc_file = msvc_libc_txt;
+        s.step.dependOn(&msvc_write_files.step);
+    }
     const exe = b.addExecutable(.{
         .name = "lua",
         .target = target,
@@ -26,6 +46,10 @@ pub fn build(b: *std.Build) !void {
         .version = .{ .major = 5, .minor = 4, .patch = 7 },
         .link_libc = true,
     });
+    if (use_xwin) {
+        exe.libc_file = msvc_libc_txt;
+        exe.step.dependOn(&msvc_write_files.step);
+    }
     // statically link on windows to avoid https://github.com/ziglang/zig/issues/15107 in 0.13.0
     exe.linkLibrary(if (build_shared and target.result.os.tag != .windows) shared.? else static);
 
@@ -36,6 +60,10 @@ pub fn build(b: *std.Build) !void {
         .version = .{ .major = 5, .minor = 4, .patch = 7 },
         .link_libc = true,
     });
+    if (use_xwin) {
+        lua_c.libc_file = msvc_libc_txt;
+        lua_c.step.dependOn(&msvc_write_files.step);
+    }
 
     b.installArtifact(exe);
     b.installArtifact(lua_c);
@@ -61,6 +89,8 @@ pub fn build(b: *std.Build) !void {
 
     const libs: []const *std.Build.Step.Compile = if (build_shared) &.{ static, shared.? } else &.{static};
     for (libs) |lib| {
+        if (use_xwin) lib.libc_file = msvc_libc_txt;
+        lib.step.dependOn(&msvc_write_files.step);
         lib.addIncludePath(upstream.path("src"));
         lib.addCSourceFiles(.{
             .root = .{ .dependency = .{ .dependency = upstream, .sub_path = "" } },
