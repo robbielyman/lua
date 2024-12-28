@@ -28,10 +28,10 @@ jobs:
           version: 0.13.0
       - uses: actions-rust-lang/setup-rust-toolchain@v1
         if: startsWith(matrix.target, 'x86_64-windows-msvc')
-      - run: cargo install xwin
+      - run: cargo install --locked xwin
         if: startsWith(matrix.target, 'x86_64-windows-msvc')
       - run: |
-          xwin xwin --accept-license --arch x86_64,aarch64 --variant desktop --sdk-version "10.0.20348" \
+          xwin --accept-license --arch x86_64,aarch64 --variant desktop --sdk-version "10.0.20348" \
           splat --include-debug-libs --include-debug-symbols --preserve-ms-arch-notation --output .xwin
         if: startsWith(matrix.target, 'x86_64-windows-msvc')
       - run: zig build -Dtarget=${{ matrix.target }} -Dxwin_path=${{ github.workspace }}/.xwin
