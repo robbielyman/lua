@@ -41,6 +41,8 @@ jobs:
     needs: build-release 
     steps:
     - uses: actions/download-artifact@v4
+      with:
+        merge-multiple: true
     - uses: ncipollo/release-action@v1
       with:
         artifacts: "*.tar.gz"
