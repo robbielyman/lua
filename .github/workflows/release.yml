@@ -32,7 +32,7 @@ jobs:
         if: startsWith(matrix.target, 'x86_64-windows-msvc')
       - run: |
           xwin --accept-license --arch x86_64,aarch64 --variant desktop --sdk-version "10.0.20348" \
-          splat --include-debug-libs --include-debug-symbols --preserve-ms-arch-notation --output .xwin
+          splat --include-debug-libs --include-debug-symbols --preserve-ms-arch-notation --output ${{ github.workspace }}/.xwin
         if: startsWith(matrix.target, 'x86_64-windows-msvc')
       - run: zig build -Dtarget=${{ matrix.target }} -Dxwin_path=${{ github.workspace }}/.xwin
       - name: zip artifact
