@@ -41,8 +41,7 @@ pub fn build(b: *std.Build) !void {
         exe.libc_file = msvc_libc_txt;
         exe.step.dependOn(&msvc_write_files.?.step);
     }
-    // statically link on windows to avoid https://github.com/ziglang/zig/issues/15107 in 0.13.0
-    exe.linkLibrary(if (build_shared and target.result.os.tag != .windows) shared.? else static);
+    exe.linkLibrary(if (build_shared) shared.? else static);
 
     const lua_c = b.addExecutable(.{
         .name = "luac",
