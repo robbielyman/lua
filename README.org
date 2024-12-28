@@ -1,0 +1,35 @@
+* Lua
+
+This is [[https://lua.org][Lua]] version 5.4.7, packaged with the [[https://ziglang.org][Zig]] build system.
+
+To build on all targets, run
+
+#+begin_src sh
+  zig build
+#+end_src
+
+The Zig build system's standard options apply: for example to build in Debug mode,
+add =-Doptimize=Debug=. To cross-compile, specify =-Dtarget=.
+
+To use the compiled Lua library from a project using the Zig build system,
+you can run
+
+#+begin_src sh
+  zig fetch --save git+https://github.com/robbielyman/lua
+#+end_src
+
+and then in your =build.zig=, add something like
+
+#+begin_src zig
+  const lua_dep = b.dependency("lua", .{
+    .target = target,
+    .optimize = opimize,
+  });
+  const lua_lib = lua_dep.artifact("lua");
+#+end_src
+
+* Acknowledgements
+
+This =build.zig= file is heavily indebted to [[https://github.com/natecraddock][@natecraddock]] and [[https://github.com/delta1024][@delta1024]].
+It mainly exists to provide a =build.zig= project which correctly compiles the Lua interpreter as =lua=,
+so that projects like [[https://github.com/luarocks/luarocks][LuaRocks]] can use it.
