@@ -25,7 +25,7 @@ jobs:
       - uses: mlugg/setup-zig@v1
         with:
           version: master
-      - run: zig build -Dtarget=${{ matrix.target }}
+      - run: zig build -Dtarget=${{ matrix.target }} -Dshared=true
       - name: zip artifact
         run: |
           cd zig-out/ && tar -czvf ../lua_${{ matrix.target }}.tar.gz .
