@@ -26,6 +26,8 @@ jobs:
         with:
           version: master
       - run: zig build -Dtarget=${{ matrix.target }} -Dshared=true
+        if: endsWith(matrix.target, 'musl') != true
+      - run: zig build -Dtarget=${{ matrix.target }}
       - name: zip artifact
         run: |
           cd zig-out/ && tar -czvf ../lua_${{ matrix.target }}.tar.gz .
